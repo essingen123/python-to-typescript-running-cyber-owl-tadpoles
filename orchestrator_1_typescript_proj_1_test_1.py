@@ -4,19 +4,27 @@ import subprocess as sp
 def run_cmd(cmd, verbose=False):
     if verbose:
         print(f"Running command: {cmd}")
-    return sp.run(cmd, shell=True, check=True, stdout=sp.PIPE, stderr=sp.PIPE).stdout.decode('utf-8')
+    result = sp.run(cmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
+    if result.returncode != 0:
+        print(f"Command failed with error:\n{result.stderr.decode('utf-8')}")
+        raise sp.CalledProcessError(result.returncode, cmd)
+    return result.stdout.decode('utf-8')
 
 try:
     # Install nvm if not present
     if not os.path.exists(os.path.expanduser("~/.nvm/nvm.sh")):
         print("Installing nvm...")
         run_cmd("curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash", verbose=True)
-        run_cmd('export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install node', verbose=True)
-
-    # Load nvm
-    print("Loading nvm...")
-    run_cmd('export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm use node', verbose=True)
-
+    
+    # Source nvm and install Node.js 16 if necessary
+    print("Loading nvm and installing Node.js...")
+    run_cmd('export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install 16', verbose=True)
+    run_cmd('export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm use 16', verbose=True)
+    
+    # Ensure nvm uses Node.js 16 in the current shell
+    os.environ["NVM_DIR"] = os.path.expanduser("~/.nvm")
+    os.system('source $NVM_DIR/nvm.sh && nvm use 16')
+    
     # Create project directory and initialize Node.js project
     print("Setting up project directory...")
     os.makedirs('typescript_server', exist_ok=True)
@@ -66,7 +74,7 @@ fetchAirQualityData();
     print("Creating Dockerfile...")
     with open('Dockerfile', 'w') as f:
         f.write("""
-FROM node:14
+FROM node:16
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
