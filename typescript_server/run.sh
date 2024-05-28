@@ -1,5 +1,6 @@
 
 #!/bin/bash
+podman rm -f ts-server
 podman build -t typescript-server .
 podman run -d -p 3000:3000 --name ts-server typescript-server
 sleep 5

@@ -1,43 +1,22 @@
 import os
 import subprocess as sp
 
-def run_cmd(cmd, verbose=False):
-    if verbose:
-        print(f"Running command: {cmd}")
+def r(cmd):
     result = sp.run(cmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
-    if result.returncode != 0:
-        print(f"Command failed with error:\n{result.stderr.decode('utf-8')}")
-        raise sp.CalledProcessError(result.returncode, cmd)
+    if result.returncode: raise sp.CalledProcessError(result.returncode, cmd)
     return result.stdout.decode('utf-8')
 
 try:
-    # Install nvm if not present
     if not os.path.exists(os.path.expanduser("~/.nvm/nvm.sh")):
-        print("Installing nvm...")
-        run_cmd("curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash", verbose=True)
+        r("curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash")
+    r('bash -c "source $HOME/.nvm/nvm.sh && nvm install 16 && nvm use 16"')
     
-    # Source nvm and install Node.js 16 if necessary
-    print("Loading nvm and installing Node.js...")
-    run_cmd('export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm install 16', verbose=True)
-    run_cmd('export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && nvm use 16', verbose=True)
-    
-    # Ensure nvm uses Node.js 16 in the current shell
-    os.environ["NVM_DIR"] = os.path.expanduser("~/.nvm")
-    os.system('source $NVM_DIR/nvm.sh && nvm use 16')
-    
-    # Create project directory and initialize Node.js project
-    print("Setting up project directory...")
     os.makedirs('typescript_server', exist_ok=True)
     os.chdir('typescript_server')
-    print("Initializing Node.js project...")
-    run_cmd("npm init -y", verbose=True)
-    print("Installing dependencies...")
-    run_cmd("npm install typescript ts-node @types/node @types/express express three @types/three axios @types/axios", verbose=True)
-    print("Initializing TypeScript...")
-    run_cmd("npx tsc --init", verbose=True)
+    r("npm init -y")
+    r("npm install typescript ts-node @types/node @types/express express three @types/three axios @types/axios")
+    r("npx tsc --init")
 
-    # Create server.ts
-    print("Creating server.ts...")
     with open('server.ts', 'w') as f:
         f.write("""
 import express from 'express'; import path from 'path'; import axios from 'axios';
@@ -45,13 +24,11 @@ const app = express(); const port = 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/air-quality', async (req, res) => {
     try { const response = await axios.get('https://api.openaq.org/v1/latest'); res.json(response.data); }
-    catch (error) { res.status(500).send(error.toString()); }
+    catch (error: any) { res.status(500).send(error.toString()); }
 });
 app.listen(port, () => { console.log(`Server is running at http://localhost:${port}`); });
 """)
 
-    # Create index.html
-    print("Creating index.html...")
     os.makedirs('public', exist_ok=True)
     with open('public/index.html', 'w') as f:
         f.write("""
@@ -70,8 +47,6 @@ fetchAirQualityData();
 </script></body></html>
 """)
 
-    # Create Dockerfile
-    print("Creating Dockerfile...")
     with open('Dockerfile', 'w') as f:
         f.write("""
 FROM node:16
@@ -82,11 +57,10 @@ COPY . .
 CMD ["npx", "ts-node", "server.ts"]
 """)
 
-    # Create run.sh
-    print("Creating run.sh...")
     with open('run.sh', 'w') as f:
         f.write("""
 #!/bin/bash
+podman rm -f ts-server
 podman build -t typescript-server .
 podman run -d -p 3000:3000 --name ts-server typescript-server
 sleep 5
@@ -95,8 +69,13 @@ podman logs -f ts-server
 """)
 
     os.chmod('run.sh', 0o755)
-    print("Running the server...")
     sp.run('./run.sh', shell=True)
+
+    r('git init')
+    r('git add .')
+    r('git commit -m "Initial commit"')
+    r('git remote add origin https://github.com/essingen123/python-to-ts-cyber-owl-tadpoles.git')
+    r('git push -u origin master')
 
 except Exception as e:
     print(f"Error: {e}")
