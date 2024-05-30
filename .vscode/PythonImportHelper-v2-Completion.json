@@ -1,0 +1,38 @@
+[
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "subprocess",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "subprocess",
+        "description": "subprocess",
+        "detail": "subprocess",
+        "documentation": {}
+    },
+    {
+        "label": "express",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "express",
+        "description": "express",
+        "detail": "express",
+        "documentation": {}
+    },
+    {
+        "label": "r",
+        "kind": 2,
+        "importPath": "orchestrator_1_typescript_proj_1_test_1",
+        "description": "orchestrator_1_typescript_proj_1_test_1",
+        "peekOfCode": "def r(cmd):\n    result = sp.run(cmd, shell=True, stdout=sp.PIPE, stderr=sp.PIPE)\n    if result.returncode: raise sp.CalledProcessError(result.returncode, cmd)\n    return result.stdout.decode('utf-8')\ntry:\n    if not os.path.exists(os.path.expanduser(\"~/.nvm/nvm.sh\")):\n        r(\"curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash\")\n    r('bash -c \"source $HOME/.nvm/nvm.sh && nvm install 16 && nvm use 16\"')\n    os.makedirs('typescript_server', exist_ok=True)\n    os.chdir('typescript_server')",
+        "detail": "orchestrator_1_typescript_proj_1_test_1",
+        "documentation": {}
+    }
+]
